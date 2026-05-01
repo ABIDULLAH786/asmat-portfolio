@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
-import { Input, Label, Textarea } from "@/components/ui/Input";
+import { Input, Label } from "@/components/ui/Input";
 import IconPicker from "@/components/admin/IconPicker";
 import DynamicIcon from "@/components/site/DynamicIcon";
 import type { ContactInfo, SocialLink, SocialZone } from "@/lib/supabase/types";

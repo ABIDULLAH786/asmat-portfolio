@@ -34,16 +34,13 @@ export default function IconPicker({ value, onChange, placeholder = "Search icon
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  // Search effect (debounced)
+  // Search effect (debounced) — only runs when there is a query term.
   useEffect(() => {
     if (!open) return;
     const term = q.trim().toLowerCase();
-    if (!term) {
-      setResults(POPULAR_ICONS);
-      return;
-    }
-    setSearching(true);
+    if (!term) return;
     const handle = setTimeout(async () => {
+      setSearching(true);
       const libs = allLibs();
       const all: string[] = [];
       // Load every lib in parallel — these are bundle-split chunks on
@@ -64,6 +61,7 @@ export default function IconPicker({ value, onChange, placeholder = "Search icon
     return () => clearTimeout(handle);
   }, [q, open]);
 
+  const displayed = q.trim() ? results : POPULAR_ICONS;
   const currentLib = useMemo(() => (value ? iconLibFor(value) : undefined), [value]);
 
   return (
@@ -118,11 +116,11 @@ export default function IconPicker({ value, onChange, placeholder = "Search icon
             {searching && (
               <div className="py-6 text-center text-xs text-white/50">Searching…</div>
             )}
-            {!searching && results.length === 0 && (
+            {!searching && displayed.length === 0 && (
               <div className="py-6 text-center text-xs text-white/50">No icons found.</div>
             )}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {results.map((name) => (
+              {displayed.map((name) => (
                 <button
                   key={name}
                   type="button"

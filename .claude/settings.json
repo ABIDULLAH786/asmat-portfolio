@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/khive/ME/**)",
+      "Bash(npm --version)",
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --no-git --use-npm --yes)"
+    ]
+  }
+}

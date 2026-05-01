@@ -3,6 +3,22 @@ import Image from "next/image";
 import HeaderNav from "./HeaderNav";
 import { getSiteSettings } from "@/lib/queries";
 
+function StretchedLine({ text }: { text: string }) {
+  return (
+    <span
+      className="flex justify-between"
+      style={{ letterSpacing: 0 }}
+      aria-label={text}
+    >
+      {Array.from(text).map((ch, i) => (
+        <span key={i} aria-hidden="true">
+          {ch === " " ? " " : ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default async function Header() {
   let settings = null;
   try {
@@ -18,6 +34,7 @@ export default async function Header() {
   const heroName = settings?.hero_name ?? "Asmat Muntazir";
   const [firstLine, ...restParts] = heroName.trim().split(/\s+/);
   const secondLine = restParts.join(" ");
+  const stretchFirst = secondLine.length > firstLine.length;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#1a1a1a] bg-black/80 backdrop-blur-md">
@@ -43,8 +60,17 @@ export default async function Header() {
             className="hidden flex-col justify-center font-display text-xl font-semibold uppercase leading-[1.05] tracking-[0.2em] text-white sm:flex"
             style={{ maxHeight: size }}
           >
-            <span>{firstLine}</span>
-            {secondLine && <span>{secondLine}</span>}
+            {secondLine && stretchFirst ? (
+              <StretchedLine text={firstLine} />
+            ) : (
+              <span>{firstLine}</span>
+            )}
+            {secondLine &&
+              (stretchFirst ? (
+                <span>{secondLine}</span>
+              ) : (
+                <StretchedLine text={secondLine} />
+              ))}
           </span>
         </Link>
 

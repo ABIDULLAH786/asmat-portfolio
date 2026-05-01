@@ -1,0 +1,23 @@
+branch="$(git symbolic-ref --short HEAD)"
+
+if [ "$branch" != "main" ]; then
+  echo "Push blocked: pushes are only allowed from the 'main' branch."
+  echo "Current branch: $branch"
+  exit 1
+fi
+
+echo "Running pre-push: ESLint check..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Push blocked: ESLint reported errors."
+  exit 1
+fi
+
+echo "Running pre-push: production build..."
+npm run build
+if [ $? -ne 0 ]; then
+  echo "Push blocked: 'npm run build' failed. Fix build errors before pushing."
+  exit 1
+fi
+
+echo "Pre-push checks passed. Pushing to 'main'."

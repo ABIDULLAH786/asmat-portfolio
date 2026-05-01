@@ -241,23 +241,20 @@ function ProjectEditor({
   const sb = supabaseBrowser();
   const [draft, setDraft] = useState<Project>(project);
   const [slides, setSlides] = useState<ProjectSlide[]>([]);
-  const [loadedSlides, setLoadedSlides] = useState(false);
+  const [loadedSlides, setLoadedSlides] = useState(project.id === "new");
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCat, setNewCat] = useState("");
 
   useEffect(() => {
-    if (project.id !== "new") {
-      sb.from("project_slides")
-        .select("*")
-        .eq("project_id", project.id)
-        .order("sort_order")
-        .then(({ data }) => {
-          setSlides((data ?? []) as ProjectSlide[]);
-          setLoadedSlides(true);
-        });
-    } else {
-      setLoadedSlides(true);
-    }
+    if (project.id === "new") return;
+    sb.from("project_slides")
+      .select("*")
+      .eq("project_id", project.id)
+      .order("sort_order")
+      .then(({ data }) => {
+        setSlides((data ?? []) as ProjectSlide[]);
+        setLoadedSlides(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project.id]);
 

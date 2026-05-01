@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
@@ -30,7 +30,7 @@ export default function ProjectDetailClient({ slides, cover }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [imageIdx, setImageIdx] = useState(0);
   // Slide direction for image transitions: 1 = next, -1 = prev
-  const dirRef = useRef(1);
+  const [dir, setDir] = useState(1);
 
   useEffect(() => {
     if (tabs.length === 0) return;
@@ -38,10 +38,10 @@ export default function ProjectDetailClient({ slides, cover }: Props) {
       const n = tabs[activeIdx]?.images?.length ?? 0;
       if (n < 2) return;
       if (e.key === "ArrowLeft") {
-        dirRef.current = -1;
+        setDir(-1);
         setImageIdx((i) => (i - 1 + n) % n);
       } else if (e.key === "ArrowRight") {
-        dirRef.current = 1;
+        setDir(1);
         setImageIdx((i) => (i + 1) % n);
       }
     }
@@ -67,17 +67,17 @@ export default function ProjectDetailClient({ slides, cover }: Props) {
   const currentImage = images[safeImageIdx];
 
   const setTab = (i: number) => {
-    dirRef.current = i > activeIdx ? 1 : -1;
+    setDir(i > activeIdx ? 1 : -1);
     setActiveIdx(i);
     setImageIdx(0);
   };
 
   const next = () => {
-    dirRef.current = 1;
+    setDir(1);
     setImageIdx((i) => (i + 1) % images.length);
   };
   const prev = () => {
-    dirRef.current = -1;
+    setDir(-1);
     setImageIdx((i) => (i - 1 + images.length) % images.length);
   };
 
@@ -134,11 +134,11 @@ export default function ProjectDetailClient({ slides, cover }: Props) {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-[#1a1a1a] bg-[#0a0a0a]"
       >
-        <AnimatePresence mode="wait" custom={dirRef.current}>
+        <AnimatePresence mode="wait" custom={dir}>
           {currentImage ? (
             <motion.div
               key={currentImage}
-              custom={dirRef.current}
+              custom={dir}
               variants={{
                 enter: (d: number) => ({ opacity: 0, x: d * 60, scale: 1.02 }),
                 center: { opacity: 1, x: 0, scale: 1 },
@@ -225,7 +225,7 @@ export default function ProjectDetailClient({ slides, cover }: Props) {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 380, damping: 24 }}
               onClick={() => {
-                dirRef.current = i > safeImageIdx ? 1 : -1;
+                setDir(i > safeImageIdx ? 1 : -1);
                 setImageIdx(i);
               }}
               className={cn(

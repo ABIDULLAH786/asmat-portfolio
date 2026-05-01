@@ -15,6 +15,10 @@ export default async function Header() {
   const padding = size === 60 ? 0 : size === 80 ? 6 : 10;
   const logoUrl = settings?.logo_url;
 
+  const heroName = settings?.hero_name ?? "Asmat Muntazir";
+  const [firstLine, ...restParts] = heroName.trim().split(/\s+/);
+  const secondLine = restParts.join(" ");
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#1a1a1a] bg-black/80 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 md:px-8">
@@ -35,8 +39,12 @@ export default async function Header() {
               <span className="font-display text-base font-bold text-[#00ff88]">AM</span>
             )}
           </span>
-          <span className="hidden font-display text-sm font-semibold uppercase tracking-[0.2em] text-white sm:inline">
-            {settings?.hero_name ?? "Asmat Muntazir"}
+          <span
+            className="hidden flex-col justify-center font-display text-xl font-semibold uppercase leading-[1.05] tracking-[0.2em] text-white sm:flex"
+            style={{ maxHeight: size }}
+          >
+            <span>{firstLine}</span>
+            {secondLine && <span>{secondLine}</span>}
           </span>
         </Link>
 

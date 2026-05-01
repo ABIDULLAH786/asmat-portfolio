@@ -1,26 +1,188 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-neon: #00ff88;
+  --color-neon-dim: #00cc6e;
+  --color-neon-glow: rgba(0, 255, 136, 0.45);
+  --color-panel: #0a0a0a;
+  --color-panel-2: #111111;
+  --color-border: #1a1a1a;
+  --color-muted: #999999;
+  --color-muted-foreground: #707070;
+
+  --font-display: var(--font-orbitron), system-ui, sans-serif;
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  background: #000000;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #000000;
+  color: #ffffff;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #00ff88;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00cc6e;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Selection */
+::selection {
+  background: #00ff88;
+  color: #000000;
+}
+
+/* Custom cursor */
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: #00ff88;
+  box-shadow: 0 0 12px #00ff88;
+}
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid #00ff88;
+  transition: transform 0.18s ease, width 0.18s ease, height 0.18s ease, background 0.18s ease;
+}
+.cursor-ring.is-hovering {
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 255, 136, 0.12);
+}
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot, .cursor-ring { display: none; }
+  .site-cursor, .site-cursor * { cursor: auto !important; }
+}
+/* Only the public site hides the native cursor so the custom dot+ring
+   can take over. Admin and auth pages keep the native cursor. */
+@media (hover: hover) and (pointer: fine) {
+  .site-cursor,
+  .site-cursor a,
+  .site-cursor button,
+  .site-cursor [data-cursor="hover"],
+  .site-cursor input,
+  .site-cursor textarea,
+  .site-cursor select,
+  .site-cursor [role="button"] {
+    cursor: none !important;
+  }
+}
+
+/* Glow text */
+.text-glow {
+  text-shadow: 0 0 12px rgba(0, 255, 136, 0.55), 0 0 24px rgba(0, 255, 136, 0.25);
+}
+
+/* Neon button base */
+.neon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1.5px solid #00ff88;
+  color: #00ff88;
+  background: transparent;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.neon-btn:hover {
+  background: #00ff88;
+  color: #000000;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+}
+.neon-btn-solid {
+  background: #00ff88;
+  color: #000000;
+  border: 1.5px solid #00ff88;
+}
+.neon-btn-solid:hover {
+  background: transparent;
+  color: #00ff88;
+  box-shadow: 0 0 22px rgba(0, 255, 136, 0.55);
+}
+
+/* Card */
+.surface {
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 12px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.surface:hover {
+  border-color: #00ff88;
+  box-shadow: 0 0 28px rgba(0, 255, 136, 0.12);
+}
+
+/* Loader */
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes loader-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Grid backdrop */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0,255,136,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Soft fade-in */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+  animation: fadeUp 0.6s ease-out both;
+}
+
+input, textarea, select {
+  font-family: inherit;
 }

@@ -10,6 +10,7 @@ export type SiteSettings = {
   resume_label: string | null;
   profile_image: string | null;
   hero_name: string;
+  brand_name: string | null;
   hero_tagline: string;
   hero_intro: string;
   updated_at: string;

@@ -27,6 +27,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings | 
     resume_label: initial?.resume_label ?? "Download Resume",
     profile_image: initial?.profile_image ?? null,
     hero_name: initial?.hero_name ?? "Asmat Muntazir",
+    brand_name: initial?.brand_name ?? null,
     hero_tagline: initial?.hero_tagline ?? "",
     hero_intro: initial?.hero_intro ?? "",
     updated_at: initial?.updated_at ?? new Date().toISOString(),
@@ -115,6 +116,7 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings | 
         resume_label: data.resume_label,
         profile_image: data.profile_image,
         hero_name: data.hero_name,
+        brand_name: data.brand_name,
         hero_tagline: data.hero_tagline,
         hero_intro: data.hero_intro,
         updated_at: new Date().toISOString(),
@@ -137,11 +139,14 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings | 
       {/* Hero text */}
       <Section title="Hero">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Display name">
+          <Field label="Display name (home hero)">
             <Input
               value={data.hero_name}
               onChange={(e) => setData({ ...data, hero_name: e.target.value })}
             />
+            <p className="mt-1 text-[10px] text-white/40">
+              Shown in the &quot;Hi, I&apos;m …&quot; line on the home page only.
+            </p>
           </Field>
           <Field label="Tagline">
             <Input
@@ -156,6 +161,23 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings | 
             value={data.hero_intro}
             onChange={(e) => setData({ ...data, hero_intro: e.target.value })}
           />
+        </Field>
+      </Section>
+
+      {/* Header brand name */}
+      <Section title="Header brand">
+        <Field label="Brand name (next to logo)">
+          <Input
+            value={data.brand_name ?? ""}
+            placeholder={data.hero_name}
+            onChange={(e) =>
+              setData({ ...data, brand_name: e.target.value || null })
+            }
+          />
+          <p className="mt-1 text-[10px] text-white/40">
+            Shown in the site header beside the circle logo. Leave empty to fall
+            back to the hero display name.
+          </p>
         </Field>
       </Section>
 

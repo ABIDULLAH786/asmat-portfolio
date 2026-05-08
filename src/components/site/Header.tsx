@@ -31,8 +31,9 @@ export default async function Header() {
   const padding = size === 60 ? 0 : size === 80 ? 6 : 10;
   const logoUrl = settings?.logo_url;
 
-  const heroName = settings?.hero_name ?? "Asmat Muntazir";
-  const [firstLine, ...restParts] = heroName.trim().split(/\s+/);
+  const brandName =
+    settings?.brand_name?.trim() || settings?.hero_name || "Asmat Muntazir";
+  const [firstLine, ...restParts] = brandName.trim().split(/\s+/);
   const secondLine = restParts.join(" ");
   const stretchFirst = secondLine.length > firstLine.length;
 

@@ -22,6 +22,7 @@ create table if not exists public.site_settings (
   resume_label    text default 'Download Resume',
   profile_image   text,
   hero_name       text default 'Asmat Muntazir',
+  brand_name      text,
   hero_tagline    text default 'Graphic Designer crafting modern, tech-inspired visuals.',
   hero_intro      text default 'I design clean visual identities, illustrations and packaging that turn ideas into brands.',
   updated_at      timestamptz default now(),

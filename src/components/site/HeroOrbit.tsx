@@ -39,22 +39,6 @@ export default function HeroOrbit({ profileSrc }: { profileSrc: string | null })
           </div>
         )}
       </div>
-
-      {/* Floating chips */}
-      <motion.div
-        className="absolute -left-2 top-12 hidden rounded-full border border-[#1a1a1a] bg-black/80 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-[#00ff88] backdrop-blur md:block"
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        Visual Identity
-      </motion.div>
-      <motion.div
-        className="absolute -right-4 bottom-16 hidden rounded-full border border-[#1a1a1a] bg-black/80 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-white/80 backdrop-blur md:block"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-      >
-        Illustration
-      </motion.div>
     </div>
   );
 }

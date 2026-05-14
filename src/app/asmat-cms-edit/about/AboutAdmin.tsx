@@ -1,13 +1,15 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { uploadToBucket, deleteByPublicUrl } from "@/lib/upload";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import IconPicker from "@/components/admin/IconPicker";
 import type { AboutContent, CoreValue, Experience, Skill } from "@/lib/supabase/types";
-import { Plus, Save, Trash2, Pencil, X, Check } from "lucide-react";
+import { Plus, Save, Trash2, Pencil, X, Check, Upload, Briefcase } from "lucide-react";
 import { durationBetween } from "@/lib/utils";
 
 type Props = {
@@ -222,6 +224,29 @@ export default function AboutAdmin({ initialAbout, initialValues, initialSkills,
       created_at: new Date().toISOString(),
     });
   }
+  async function uploadExpLogo(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!expDraft) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      if (expDraft.logo_url) await deleteByPublicUrl("logos", expDraft.logo_url);
+      const url = await uploadToBucket("logos", file);
+      setExpDraft({ ...expDraft, logo_url: url });
+      toast.success("Logo uploaded.");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+      e.target.value = "";
+    }
+  }
+  async function removeExpLogo() {
+    if (!expDraft?.logo_url) return;
+    await deleteByPublicUrl("logos", expDraft.logo_url);
+    setExpDraft({ ...expDraft, logo_url: null });
+  }
+
   async function saveExp() {
     if (!expDraft || !expDraft.company.trim() || !expDraft.role.trim()) {
       toast.error("Company and role are required.");
@@ -235,6 +260,7 @@ export default function AboutAdmin({ initialAbout, initialValues, initialSkills,
       start_date: expDraft.start_date,
       end_date: expDraft.end_date || null,
       sort_order: expDraft.sort_order,
+      logo_url: expDraft.logo_url,
     };
     if (expDraft.id === "new") {
       const { data, error } = await sb.from("experiences").insert(payload).select().single();
@@ -251,11 +277,12 @@ export default function AboutAdmin({ initialAbout, initialValues, initialSkills,
     toast.success("Saved.");
     router.refresh();
   }
-  async function deleteExp(id: string) {
+  async function deleteExp(exp: Experience) {
     if (!confirm("Delete this experience?")) return;
-    const { error } = await sb.from("experiences").delete().eq("id", id);
+    const { error } = await sb.from("experiences").delete().eq("id", exp.id);
     if (error) return toast.error(error.message);
-    setExps(exps.filter((e) => e.id !== id));
+    if (exp.logo_url) await deleteByPublicUrl("logos", exp.logo_url);
+    setExps(exps.filter((e) => e.id !== exp.id));
     toast.success("Deleted.");
     router.refresh();
   }
@@ -434,16 +461,25 @@ export default function AboutAdmin({ initialAbout, initialValues, initialSkills,
           )}
           {exps.map((e) => (
             <li key={e.id} className="flex flex-col gap-3 rounded-md border border-[#1a1a1a] bg-[#0f0f0f] p-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="font-display text-sm text-white">{e.role}</p>
-                <p className="font-display text-xs text-[#00ff88]">{e.company}</p>
-                <p className="text-[10px] text-white/50">
-                  {e.start_date} → {e.end_date ?? "Present"} · {durationBetween(e.start_date, e.end_date)}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#1a1a1a] bg-[#0a0a0a] text-white/30">
+                  {e.logo_url ? (
+                    <Image src={e.logo_url} alt="" fill sizes="40px" className="object-cover" />
+                  ) : (
+                    <Briefcase size={16} />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-display text-sm text-white">{e.role}</p>
+                  <p className="font-display text-xs text-[#00ff88]">{e.company}</p>
+                  <p className="text-[10px] text-white/50">
+                    {e.start_date} → {e.end_date ?? "Present"} · {durationBetween(e.start_date, e.end_date)}
+                  </p>
+                </div>
               </div>
               <div className="flex gap-1">
                 <Button variant="muted" size="icon" onClick={() => setExpDraft(e)}><Pencil size={12} /></Button>
-                <Button variant="danger" size="icon" onClick={() => deleteExp(e.id)}><Trash2 size={12} /></Button>
+                <Button variant="danger" size="icon" onClick={() => deleteExp(e)}><Trash2 size={12} /></Button>
               </div>
             </li>
           ))}
@@ -477,6 +513,34 @@ export default function AboutAdmin({ initialAbout, initialValues, initialSkills,
               <Label>Description</Label>
               <Textarea rows={3} value={expDraft.description ?? ""} onChange={(e) => setExpDraft({ ...expDraft, description: e.target.value })} />
             </div>
+
+            <div>
+              <Label>Company logo</Label>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#1a1a1a] bg-[#0a0a0a] text-white/30">
+                  {expDraft.logo_url ? (
+                    <Image src={expDraft.logo_url} alt="Logo preview" fill sizes="64px" className="object-cover" />
+                  ) : (
+                    <Briefcase size={20} />
+                  )}
+                </div>
+                <label className="cursor-pointer">
+                  <input type="file" accept="image/*" className="hidden" onChange={uploadExpLogo} />
+                  <span className="inline-flex h-9 items-center gap-2 rounded-md border border-[#00ff88] bg-[#00ff88] px-3 font-display text-[10px] uppercase tracking-[0.2em] text-black hover:bg-transparent hover:text-[#00ff88]">
+                    <Upload size={12} /> {expDraft.logo_url ? "Replace" : "Upload"}
+                  </span>
+                </label>
+                {expDraft.logo_url && (
+                  <Button variant="danger" size="sm" onClick={removeExpLogo}>
+                    <Trash2 size={12} /> Remove
+                  </Button>
+                )}
+              </div>
+              <p className="mt-1 text-[10px] text-white/40">
+                Square images (e.g. 256×256) look best. Uploading replaces the previous file automatically.
+              </p>
+            </div>
+
             <p className="text-[10px] text-white/40">
               Duration auto-calculated: <span className="text-[#00ff88]">{durationBetween(expDraft.start_date, expDraft.end_date)}</span>
             </p>

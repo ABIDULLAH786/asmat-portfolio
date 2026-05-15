@@ -48,16 +48,6 @@ try {
   console.log(`Applying ${migrationPath} ...`);
   await client.query(sql);
   console.log("Migration applied successfully.");
-
-  const check = await client.query(
-    "select column_name from information_schema.columns where table_schema = 'public' and table_name = 'site_settings' and column_name = 'brand_name'"
-  );
-  if (check.rowCount === 1) {
-    console.log("Verified: site_settings.brand_name exists.");
-  } else {
-    console.error("Verification failed: brand_name column not found after migration.");
-    process.exitCode = 1;
-  }
 } catch (err) {
   console.error("Migration failed:", err.message);
   process.exitCode = 1;

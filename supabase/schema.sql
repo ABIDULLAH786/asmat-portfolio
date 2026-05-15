@@ -131,10 +131,14 @@ create table if not exists public.projects (
   description   text,
   category_id   uuid references public.categories(id) on delete set null,
   cover_image   text,
+  source_url    text,
   sort_order    int default 0,
   created_at    timestamptz default now(),
   updated_at    timestamptz default now()
 );
+-- Idempotent: existing installs get the column added too
+alter table public.projects add column if not exists source_url text;
+
 drop trigger if exists trg_projects_updated on public.projects;
 create trigger trg_projects_updated before update on public.projects
   for each row execute function public.set_updated_at();

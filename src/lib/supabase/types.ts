@@ -74,6 +74,7 @@ export type Project = {
   description: string | null;
   category_id: string | null;
   cover_image: string | null;
+  source_url: string | null;
   sort_order: number;
   tags: string[];
   featured: boolean;

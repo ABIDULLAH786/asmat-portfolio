@@ -31,6 +31,7 @@ export default function ProjectsAdmin({ initialProjects, initialCategories }: Pr
       description: "",
       category_id: categories[0]?.id ?? null,
       cover_image: null,
+      source_url: null,
       sort_order: projects.length,
       tags: [],
       featured: false,
@@ -331,6 +332,7 @@ function ProjectEditor({
           description: draft.description || null,
           category_id: draft.category_id,
           cover_image: draft.cover_image,
+          source_url: draft.source_url?.trim() || null,
           sort_order: draft.sort_order,
         })
         .select()
@@ -349,6 +351,7 @@ function ProjectEditor({
           description: draft.description || null,
           category_id: draft.category_id,
           cover_image: draft.cover_image,
+          source_url: draft.source_url?.trim() || null,
           sort_order: draft.sort_order,
           updated_at: new Date().toISOString(),
         })
@@ -449,6 +452,22 @@ function ProjectEditor({
           <div className="md:col-span-2">
             <Label>Description</Label>
             <Textarea rows={3} value={draft.description ?? ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+          </div>
+
+          {/* Project source URL — link to where the work lives publicly */}
+          <div className="md:col-span-2">
+            <Label>Project source URL (optional)</Label>
+            <Input
+              type="url"
+              placeholder="https://www.behance.net/gallery/… or https://dribbble.com/shots/…"
+              value={draft.source_url ?? ""}
+              onChange={(e) => setDraft({ ...draft, source_url: e.target.value || null })}
+            />
+            <p className="mt-1 text-[10px] text-white/40">
+              Where this project is published — Dribbble, Behance, Instagram, etc.
+              When set, a &quot;View original&quot; button appears on the public project page.
+              Leave blank to hide it for unpublished work.
+            </p>
           </div>
 
           {/* Category dropdown with create-on-fly */}

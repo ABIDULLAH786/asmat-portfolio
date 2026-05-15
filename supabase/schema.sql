@@ -107,14 +107,19 @@ create table if not exists public.categories (
   created_at   timestamptz default now()
 );
 
-insert into public.categories (name, slug, sort_order) values
+-- Only seed default categories on a fresh install. Once any category exists
+-- (e.g. after seed.sql has replaced them with user's real list), this is a
+-- no-op so re-running schema.sql is safe.
+insert into public.categories (name, slug, sort_order)
+select * from (values
   ('Art & Illustration',          'art-illustration',          1),
   ('Visual Identity Design',      'visual-identity',           2),
   ('Marketing & Advertising Design', 'marketing-advertising', 3),
   ('Publication Design',          'publication',               4),
   ('Packaging Design',            'packaging',                 5),
   ('Environmental Design',        'environmental',             6)
-on conflict (slug) do nothing;
+) as t(name, slug, sort_order)
+where not exists (select 1 from public.categories);
 
 -- =====================================================================
 -- 7. Projects + slides

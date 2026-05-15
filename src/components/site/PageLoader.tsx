@@ -6,7 +6,8 @@ export default function PageLoader() {
   const [show, setShow] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setShow(false), 900);
+    // Hide as soon as the page is interactive — minimal overlay time.
+    const t = setTimeout(() => setShow(false), 250);
     return () => clearTimeout(t);
   }, []);
 

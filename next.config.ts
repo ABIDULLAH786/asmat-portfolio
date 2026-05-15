@@ -5,6 +5,10 @@ const supabaseHost = supabaseUrl.replace(/^https?:\/\//, "");
 
 const nextConfig: NextConfig = {
   images: {
+    // The CMS lets the admin paste arbitrary image URLs (GitHub, gstatic,
+    // imgur, anything they've already hosted). Whitelist any HTTPS host so
+    // next/image accepts every URL the admin enters. The narrower Supabase
+    // pattern still ensures Storage public reads work.
     remotePatterns: [
       ...(supabaseHost
         ? [
@@ -15,11 +19,9 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      // Allow common image hosts used during data import
-      { protocol: "https" as const, hostname: "github.com" },
-      { protocol: "https" as const, hostname: "raw.githubusercontent.com" },
-      { protocol: "https" as const, hostname: "upload.wikimedia.org" },
-      { protocol: "https" as const, hostname: "static.canva.com" },
+      // Catch-all — allow any HTTPS host. Admin-only writes, so the surface
+      // is intentional and limited to images the site owner has chosen.
+      { protocol: "https" as const, hostname: "**" },
     ],
   },
 };

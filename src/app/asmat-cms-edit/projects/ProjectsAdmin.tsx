@@ -244,6 +244,31 @@ function ProjectEditor({
   const [loadedSlides, setLoadedSlides] = useState(project.id === "new");
   const [showNewCat, setShowNewCat] = useState(false);
   const [newCat, setNewCat] = useState("");
+  // URL-input state — image uploads to Supabase Storage are disabled (free
+  // plan); admins paste public URLs (e.g. GitHub-hosted images) instead.
+  const [coverUrlInput, setCoverUrlInput] = useState("");
+  const [slideUrlInputs, setSlideUrlInputs] = useState<Record<string, string>>({});
+
+  function commitCoverUrl() {
+    const url = coverUrlInput.trim();
+    if (!url) return;
+    setDraft({ ...draft, cover_image: url });
+    setCoverUrlInput("");
+    toast.success("Cover URL set.");
+  }
+
+  function addSlideImageUrl(slideId: string) {
+    const raw = (slideUrlInputs[slideId] ?? "").trim();
+    if (!raw) return;
+    // Accept one URL or many newline-separated URLs
+    const urls = raw.split(/\s*\n+\s*/).map((u) => u.trim()).filter(Boolean);
+    if (urls.length === 0) return;
+    setSlides((arr) =>
+      arr.map((x) => (x.id === slideId ? { ...x, images: [...x.images, ...urls] } : x))
+    );
+    setSlideUrlInputs((m) => ({ ...m, [slideId]: "" }));
+    toast.success(`Added ${urls.length} image${urls.length > 1 ? "s" : ""}.`);
+  }
 
   useEffect(() => {
     if (project.id === "new") return;
@@ -465,8 +490,8 @@ function ProjectEditor({
           {/* Cover image */}
           <div className="md:col-span-2">
             <Label>Cover image</Label>
-            <div className="flex items-center gap-4">
-              <div className="relative h-24 w-32 overflow-hidden rounded-md border border-[#1a1a1a] bg-[#0a0a0a]">
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-md border border-[#1a1a1a] bg-[#0a0a0a]">
                 {draft.cover_image ? (
                   <Image src={draft.cover_image} alt="" fill sizes="128px" className="object-cover" />
                 ) : (
@@ -475,20 +500,59 @@ function ProjectEditor({
                   </div>
                 )}
               </div>
-              <label className="cursor-pointer">
-                <input type="file" accept="image/*" className="hidden" onChange={uploadCover} />
-                <span className="inline-flex h-9 items-center gap-2 rounded-md border border-[#00ff88] bg-[#00ff88] px-3 font-display text-[10px] uppercase tracking-[0.2em] text-black hover:bg-transparent hover:text-[#00ff88]">
-                  <Upload size={12} /> Upload cover
-                </span>
-              </label>
-              {draft.cover_image && (
-                <Button variant="danger" size="sm" onClick={async () => {
-                  if (draft.cover_image) await deleteByPublicUrl("projects", draft.cover_image);
-                  setDraft({ ...draft, cover_image: null });
-                }}>
-                  <Trash2 size={12} /> Remove
-                </Button>
-              )}
+
+              <div className="flex flex-1 min-w-[260px] flex-col gap-2">
+                {/* URL input — primary path while uploads are disabled */}
+                <div className="flex gap-2">
+                  <Input
+                    type="url"
+                    placeholder="Paste image URL (e.g. https://github.com/…/cover.png?raw=true)"
+                    value={coverUrlInput}
+                    onChange={(e) => setCoverUrlInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitCoverUrl();
+                      }
+                    }}
+                  />
+                  <Button variant="primary" size="md" onClick={commitCoverUrl}>
+                    Use URL
+                  </Button>
+                </div>
+
+                {/* Disabled file upload — code path preserved for when storage is enabled */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <label
+                    className="cursor-not-allowed opacity-50"
+                    title="Disabled to stay within the Supabase free-plan storage limit. Use the URL field above."
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled
+                      onChange={uploadCover}
+                    />
+                    <span className="inline-flex h-9 items-center gap-2 rounded-md border border-[#00ff88]/40 bg-transparent px-3 font-display text-[10px] uppercase tracking-[0.2em] text-[#00ff88]/60">
+                      <Upload size={12} /> Upload cover (disabled)
+                    </span>
+                  </label>
+                  {draft.cover_image && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setDraft({ ...draft, cover_image: null })}
+                    >
+                      <Trash2 size={12} /> Remove
+                    </Button>
+                  )}
+                </div>
+                <p className="text-[10px] text-white/40">
+                  Uploads to Supabase Storage are disabled while on the free plan.
+                  Paste a publicly-accessible image URL (GitHub, Imgur, etc.) instead.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -529,21 +593,52 @@ function ProjectEditor({
                   </div>
 
                   <div className="mt-4">
-                    <div className="flex items-center justify-between">
-                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-white/60">Images ({s.images.length})</p>
-                      <label className="cursor-pointer">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-white/60">
+                        Images ({s.images.length})
+                      </p>
+                      <label
+                        className="cursor-not-allowed opacity-50"
+                        title="Disabled to stay within the Supabase free-plan storage limit. Use the URL field below."
+                      >
                         <input
                           type="file"
                           accept="image/*"
                           multiple
                           className="hidden"
+                          disabled
                           onChange={(e) => e.target.files && uploadSlideImage(s, e.target.files)}
                         />
-                        <span className="inline-flex h-8 items-center gap-2 rounded-md border border-[#00ff88] bg-transparent px-3 font-display text-[10px] uppercase tracking-[0.2em] text-[#00ff88] hover:bg-[#00ff88] hover:text-black">
-                          <Upload size={12} /> Add images
+                        <span className="inline-flex h-8 items-center gap-2 rounded-md border border-[#00ff88]/40 bg-transparent px-3 font-display text-[10px] uppercase tracking-[0.2em] text-[#00ff88]/60">
+                          <Upload size={12} /> Add images (disabled)
                         </span>
                       </label>
                     </div>
+
+                    {/* URL input — primary path while storage uploads are disabled */}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Input
+                        type="url"
+                        placeholder="Paste image URL — or several, one per line"
+                        value={slideUrlInputs[s.id] ?? ""}
+                        onChange={(e) =>
+                          setSlideUrlInputs((m) => ({ ...m, [s.id]: e.target.value }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            addSlideImageUrl(s.id);
+                          }
+                        }}
+                      />
+                      <Button variant="primary" size="md" onClick={() => addSlideImageUrl(s.id)}>
+                        <Plus size={12} /> Add image
+                      </Button>
+                    </div>
+                    <p className="mt-1.5 text-[10px] text-white/40">
+                      Tip: paste multiple URLs separated by new lines to add them all at once.
+                    </p>
+
                     {s.images.length > 0 && (
                       <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
                         {s.images.map((url, i) => (

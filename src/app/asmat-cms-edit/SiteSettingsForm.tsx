@@ -30,6 +30,8 @@ export default function SiteSettingsForm({ initial }: { initial: SiteSettings | 
     brand_name: initial?.brand_name ?? null,
     hero_tagline: initial?.hero_tagline ?? "",
     hero_intro: initial?.hero_intro ?? "",
+    portfolio_pagination_enabled: initial?.portfolio_pagination_enabled ?? false,
+    portfolio_per_page: initial?.portfolio_per_page ?? 9,
     updated_at: initial?.updated_at ?? new Date().toISOString(),
   });
 

@@ -1,18 +1,26 @@
-import { getCategories, getCategoryCounts, getProjects } from "@/lib/queries";
+import {
+  getCategories,
+  getCategoryCounts,
+  getProjects,
+  getSiteSettings,
+} from "@/lib/queries";
 import PortfolioClient from "./PortfolioClient";
 import Reveal from "@/components/site/Reveal";
 
 export const revalidate = 30;
 
 export default async function PortfolioPage() {
-  const [allCats, projects, counts] = await Promise.all([
+  const [allCats, projects, counts, settings] = await Promise.all([
     getCategories().catch(() => []),
     getProjects().catch(() => []),
     getCategoryCounts().catch(() => new Map()),
+    getSiteSettings().catch(() => null),
   ]);
 
   // Only categories that actually have projects
   const cats = allCats.filter((c) => (counts.get(c.id) ?? 0) > 0);
+  const pagerEnabled = settings?.portfolio_pagination_enabled ?? false;
+  const perPage = Math.max(1, Math.min(100, settings?.portfolio_per_page ?? 9));
 
   return (
     <div className="relative">
@@ -34,7 +42,12 @@ export default async function PortfolioPage() {
           </Reveal>
         </div>
 
-        <PortfolioClient categories={cats} projects={projects} />
+        <PortfolioClient
+          categories={cats}
+          projects={projects}
+          pagerEnabled={pagerEnabled}
+          perPage={perPage}
+        />
       </div>
     </div>
   );

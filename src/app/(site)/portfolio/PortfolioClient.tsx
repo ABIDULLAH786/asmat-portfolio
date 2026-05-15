@@ -7,12 +7,23 @@ import { ChevronLeft, ChevronRight, Image as ImageIcon, Star } from "lucide-reac
 import type { Category, Project } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
-type Props = { categories: Category[]; projects: Project[] };
+type Props = {
+  categories: Category[];
+  projects: Project[];
+  pagerEnabled?: boolean;
+  perPage?: number;
+};
 
 const ALL = "__all__";
 
-export default function PortfolioClient({ categories, projects }: Props) {
+export default function PortfolioClient({
+  categories,
+  projects,
+  pagerEnabled = false,
+  perPage = 9,
+}: Props) {
   const [active, setActive] = useState<string>(ALL);
+  const [page, setPage] = useState(1);
   const railRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
@@ -21,6 +32,20 @@ export default function PortfolioClient({ categories, projects }: Props) {
     if (active === ALL) return projects;
     return projects.filter((p) => p.category_id === active);
   }, [active, projects]);
+
+  // Pagination math
+  const totalPages = pagerEnabled
+    ? Math.max(1, Math.ceil(filtered.length / perPage))
+    : 1;
+  const safePage = Math.min(page, totalPages);
+  const visibleProjects = pagerEnabled
+    ? filtered.slice((safePage - 1) * perPage, safePage * perPage)
+    : filtered;
+
+  // Reset to page 1 whenever the category changes
+  useEffect(() => {
+    setPage(1);
+  }, [active]);
 
   // Track overflow state to show arrows only when needed
   useEffect(() => {
@@ -134,7 +159,7 @@ export default function PortfolioClient({ categories, projects }: Props) {
             </motion.p>
           ) : (
             <motion.div
-              key={active}
+              key={`${active}-${safePage}`}
               variants={{
                 hidden: {},
                 show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } },
@@ -144,15 +169,195 @@ export default function PortfolioClient({ categories, projects }: Props) {
               exit={{ opacity: 0, transition: { duration: 0.18 } }}
               className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
-              {filtered.map((p) => (
+              {visibleProjects.map((p) => (
                 <ProjectCard key={p.id} p={p} />
               ))}
             </motion.div>
           )}
         </AnimatePresence>
+
+        {pagerEnabled && filtered.length > perPage && (
+          <Pager
+            page={safePage}
+            totalPages={totalPages}
+            total={filtered.length}
+            perPage={perPage}
+            onChange={(p) => {
+              setPage(p);
+              // Scroll the grid back into view on page change
+              if (typeof window !== "undefined") {
+                window.scrollTo({ top: window.scrollY - 80, behavior: "smooth" });
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );
+}
+
+/* ============================================================
+ * Themed pager — black + neon green
+ * ============================================================ */
+function Pager({
+  page,
+  totalPages,
+  total,
+  perPage,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  perPage: number;
+  onChange: (p: number) => void;
+}) {
+  const items = paginate(page, totalPages);
+  const from = (page - 1) * perPage + 1;
+  const to = Math.min(page * perPage, total);
+
+  return (
+    <motion.nav
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.1 }}
+      aria-label="Portfolio pagination"
+      className="mt-12 flex flex-col items-center gap-3"
+    >
+      <div className="flex items-center gap-2">
+        <PagerButton
+          disabled={page <= 1}
+          onClick={() => onChange(Math.max(1, page - 1))}
+          ariaLabel="Previous page"
+          icon
+        >
+          <ChevronLeft size={14} />
+        </PagerButton>
+
+        <div className="flex items-center gap-1.5">
+          {items.map((it, i) =>
+            it === "…" ? (
+              <span
+                key={`gap-${i}`}
+                className="px-1 font-display text-xs tracking-[0.2em] text-white/40"
+              >
+                …
+              </span>
+            ) : (
+              <PageNumber
+                key={it}
+                value={it}
+                active={it === page}
+                onClick={() => onChange(it)}
+              />
+            )
+          )}
+        </div>
+
+        <PagerButton
+          disabled={page >= totalPages}
+          onClick={() => onChange(Math.min(totalPages, page + 1))}
+          ariaLabel="Next page"
+          icon
+        >
+          <ChevronRight size={14} />
+        </PagerButton>
+      </div>
+
+      <p className="font-display text-[10px] uppercase tracking-[0.3em] text-white/45">
+        Showing {from}–{to} of {total}
+      </p>
+    </motion.nav>
+  );
+}
+
+function PagerButton({
+  children,
+  onClick,
+  disabled,
+  ariaLabel,
+  icon,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  ariaLabel?: string;
+  icon?: boolean;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      whileHover={!disabled ? { scale: 1.06 } : undefined}
+      whileTap={!disabled ? { scale: 0.94 } : undefined}
+      transition={{ type: "spring", stiffness: 400, damping: 26 }}
+      data-cursor="hover"
+      className={cn(
+        "flex h-9 items-center justify-center rounded-full border font-display text-[10px] uppercase tracking-[0.2em] transition-colors",
+        icon ? "w-9" : "px-3",
+        disabled
+          ? "cursor-not-allowed border-[#1a1a1a] text-white/25"
+          : "border-[#1a1a1a] text-white/70 hover:border-[#00ff88] hover:text-[#00ff88]"
+      )}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+function PageNumber({
+  value,
+  active,
+  onClick,
+}: {
+  value: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.94 }}
+      transition={{ type: "spring", stiffness: 400, damping: 26 }}
+      aria-current={active ? "page" : undefined}
+      data-cursor="hover"
+      className={cn(
+        "relative flex h-9 w-9 items-center justify-center rounded-full border font-display text-xs transition-colors",
+        active
+          ? "border-[#00ff88] text-black"
+          : "border-[#1a1a1a] text-white/70 hover:border-[#00ff88] hover:text-[#00ff88]"
+      )}
+    >
+      {active && (
+        <motion.span
+          layoutId="pager-active"
+          className="absolute inset-0 rounded-full bg-[#00ff88] shadow-[0_0_18px_rgba(0,255,136,0.45)]"
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        />
+      )}
+      <span className="relative z-10">{value}</span>
+    </motion.button>
+  );
+}
+
+/**
+ * Build a compact page list: 1 … current-1 current current+1 … N
+ * Always shows first + last, plus a small window around current.
+ */
+function paginate(page: number, total: number): Array<number | "…"> {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const out: Array<number | "…"> = [1];
+  const start = Math.max(2, page - 1);
+  const end = Math.min(total - 1, page + 1);
+  if (start > 2) out.push("…");
+  for (let i = start; i <= end; i++) out.push(i);
+  if (end < total - 1) out.push("…");
+  out.push(total);
+  return out;
 }
 
 const cardVariants = {

@@ -13,6 +13,8 @@ export type SiteSettings = {
   brand_name: string | null;
   hero_tagline: string;
   hero_intro: string;
+  portfolio_pagination_enabled: boolean;
+  portfolio_per_page: number;
   updated_at: string;
 };
 

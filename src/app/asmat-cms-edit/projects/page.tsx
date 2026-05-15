@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import AdminShell from "@/components/admin/AdminShell";
 import ProjectsAdmin from "./ProjectsAdmin";
+import PaginationPanel from "./PaginationPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +11,13 @@ export default async function Page() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/asmat-cms-edit/login");
 
-  const [{ data: projects }, { data: categories }] = await Promise.all([
+  const [{ data: projects }, { data: categories }, { data: settings }] = await Promise.all([
     sb.from("projects").select("*").order("sort_order").order("created_at", { ascending: false }),
     sb.from("categories").select("*").order("sort_order").order("name"),
+    sb.from("site_settings")
+      .select("portfolio_pagination_enabled, portfolio_per_page")
+      .eq("id", 1)
+      .maybeSingle(),
   ]);
 
   return (
@@ -24,6 +29,14 @@ export default async function Page() {
           Add, edit and delete projects. Each project can have multiple slides with images.
         </p>
       </header>
+
+      <div className="mt-6">
+        <PaginationPanel
+          initialEnabled={settings?.portfolio_pagination_enabled ?? false}
+          initialPerPage={settings?.portfolio_per_page ?? 9}
+        />
+      </div>
+
       <ProjectsAdmin
         initialProjects={projects ?? []}
         initialCategories={categories ?? []}

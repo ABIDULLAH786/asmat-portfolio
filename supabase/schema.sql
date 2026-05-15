@@ -25,10 +25,25 @@ create table if not exists public.site_settings (
   brand_name      text,
   hero_tagline    text default 'Graphic Designer crafting modern, tech-inspired visuals.',
   hero_intro      text default 'I design clean visual identities, illustrations and packaging that turn ideas into brands.',
+  portfolio_pagination_enabled boolean default false,
+  portfolio_per_page           int default 9 check (portfolio_per_page between 1 and 100),
   updated_at      timestamptz default now(),
   constraint site_settings_singleton check (id = 1)
 );
 insert into public.site_settings (id) values (1) on conflict (id) do nothing;
+
+-- Idempotent additions for existing installs
+alter table public.site_settings add column if not exists portfolio_pagination_enabled boolean default false;
+alter table public.site_settings add column if not exists portfolio_per_page int default 9;
+do $$ begin
+  if not exists (
+    select 1 from information_schema.constraint_column_usage
+    where table_name = 'site_settings' and constraint_name = 'site_settings_per_page_range'
+  ) then
+    alter table public.site_settings
+      add constraint site_settings_per_page_range check (portfolio_per_page between 1 and 100);
+  end if;
+end $$;
 
 -- =====================================================================
 -- 2. About content (single row)
